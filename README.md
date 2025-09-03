@@ -214,11 +214,20 @@ chown root:wazuh /var/ossec/integrations/custom-slack*
 
 ```xml
 <ossec_config>
-    <integration>
+  <integration>
     <name>custom-slack</name>
     <alert_format>json</alert_format>
-    </integration>
+
+    <WEBHOOK_CRITICAL>https://hooks.slack.com/services/AAA/BBB/CCC</WEBHOOK_CRITICAL>
+    <LEVEL_CRITICAL>11</LEVEL_CRITICAL>
+
+    <WEBHOOK_HIGH>https://hooks.slack.com/services/DDD/EEE/FFF</WEBHOOK_HIGH>
+    <LEVEL_HIGH>7</LEVEL_HIGH>
+
+    <WEBHOOK_MEDIUM>https://hooks.slack.com/services/GGG/HHH/III</WEBHOOK_MEDIUM>
+  </integration>
 </ossec_config>
+
 ```
 
 Restart Wazuh to apply changes:

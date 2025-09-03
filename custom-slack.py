@@ -1,29 +1,26 @@
 #!/var/ossec/venv/bin/python
 
 import json
+import os
 import re
 import sys
 from datetime import datetime
-
 import requests
 
-# Slack webhook URLs (Critical, High, Medium)
-WEBHOOK_CRITICAL = ""  # replace with your Critical channel webhook
-WEBHOOK_HIGH = ""  # replace with your High channel webhook
-WEBHOOK_MEDIUM = ""  # replace with your Medium channel webhook
+# Read config from Wazuh env vars
+WEBHOOK_CRITICAL = os.getenv("OSSEC_INTEGRATION_WEBHOOK_CRITICAL", "")
+WEBHOOK_HIGH = os.getenv("OSSEC_INTEGRATION_WEBHOOK_HIGH", "")
+WEBHOOK_MEDIUM = os.getenv("OSSEC_INTEGRATION_WEBHOOK_MEDIUM", "")
 
-# Excluded Wazuh Rule IDs
+LEVEL_CRITICAL = int(os.getenv("OSSEC_INTEGRATION_LEVEL_CRITICAL", "11"))
+LEVEL_HIGH = int(os.getenv("OSSEC_INTEGRATION_LEVEL_HIGH", "7"))
+
 excluded_rules: list = []  # Example: ["1002", "5715", "18107"]
 
 
 def escape_markdown(text):
-    """
-    Escapes characters used by Slack markdown to avoid unintended formatting.
-    Only *, _, `, and ~ are special in Slack and need escaping.
-    """
     if not isinstance(text, str):
         text = str(text)
-    # Escape only Slack formatting characters: *, _, `, and ~
     return re.sub(r"([*`_~])", r"\\\1", text)
 
 
@@ -32,9 +29,9 @@ def choose_webhook(level):
         lvl = int(level)
     except ValueError:
         return WEBHOOK_MEDIUM
-    if lvl >= 11:
+    if lvl >= LEVEL_CRITICAL:
         return WEBHOOK_CRITICAL
-    elif lvl >= 7:
+    elif lvl >= LEVEL_HIGH:
         return WEBHOOK_HIGH
     else:
         return WEBHOOK_MEDIUM
@@ -73,8 +70,8 @@ def main():
     except ValueError:
         timestamp = timestamp_raw
 
-    # Build Slack message with block formatting
     text = (
+        "*:rotating_light: Wazuh Alert Notification*\n\n"
         f"*Time:* `{escape_markdown(timestamp)}`\n"
         f"*Username:* `{escape_markdown(srcuser)}`\n"
         f"*Source IP:* `{escape_markdown(srcip)}`\n"
@@ -100,7 +97,11 @@ def main():
     text += "\n\n────────────────────────\n"
 
     webhook_url = choose_webhook(alert_level)
-    payload = {"icon_emoji": ":rotating_light:", "username": "Wazuh Alert Notification", "text": text}
+    if not webhook_url:
+        print("[ERROR] No webhook configured for this level.")
+        sys.exit(1)
+
+    payload = {"text": text}
     resp = requests.post(webhook_url, json=payload)
     if resp.status_code != 200:
         print(f"[ERROR] Slack response: {resp.status_code} – {resp.text}")
@@ -108,4 +109,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
