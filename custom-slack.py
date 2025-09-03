@@ -8,12 +8,12 @@ from datetime import datetime
 import requests
 
 # Read config from Wazuh env vars
-WEBHOOK_CRITICAL = os.getenv("OSSEC_INTEGRATION_WEBHOOK_CRITICAL", "")
-WEBHOOK_HIGH = os.getenv("OSSEC_INTEGRATION_WEBHOOK_HIGH", "")
-WEBHOOK_MEDIUM = os.getenv("OSSEC_INTEGRATION_WEBHOOK_MEDIUM", "")
+WEBHOOK_CRITICAL = os.getenv("WEBHOOK_CRITICAL", "")
+WEBHOOK_HIGH = os.getenv("WEBHOOK_HIGH", "")
+WEBHOOK_MEDIUM = os.getenv("WEBHOOK_MEDIUM", "")
 
-LEVEL_CRITICAL = int(os.getenv("OSSEC_INTEGRATION_LEVEL_CRITICAL", "11"))
-LEVEL_HIGH = int(os.getenv("OSSEC_INTEGRATION_LEVEL_HIGH", "7"))
+LEVEL_CRITICAL = int(os.getenv("LEVEL_CRITICAL", "11"))
+LEVEL_HIGH = int(os.getenv("LEVEL_HIGH", "7"))
 
 excluded_rules: list = []  # Example: ["1002", "5715", "18107"]
 
