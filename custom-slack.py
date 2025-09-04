@@ -46,7 +46,7 @@ def main():
     webhook_url = choose_webhook(alert_level, options)
     if not webhook_url:
         print(f"[ERROR] No valid webhook for level {alert_level}.")
-        sys.exit(1)
+        sys.exit(0)
 
     # Build message
     data = alert.get("data", {})
@@ -78,7 +78,8 @@ def main():
         text += f"\n\n*🛡️ CVE:* `{cve}`\n*Title:* {title}\n<{url}|Details in CTI>"
 
     text += "\n\n────────────────────────\n"
-    resp = requests.post(webhook_url, json={"text": text})
+    payload = {"icon_emoji": ":rotating_light:", "username": "Wazuh Alert Notification", "text": text}
+    resp = requests.post(webhook_url, json=payload)
     if resp.status_code != 200:
         print(f"[ERROR] Slack returned {resp.status_code}: {resp.text}")
 
