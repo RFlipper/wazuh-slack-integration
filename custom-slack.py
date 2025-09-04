@@ -58,7 +58,6 @@ def main():
         pass
 
     text = (
-        "*:rotating_light: Wazuh Alert Notification*\n\n"
         f"*Time:* `{escape_markdown(ts)}`\n"
         f"*Username:* `{escape_markdown(data.get('srcuser') or data.get('dstuser') or 'unknown')}`\n"
         f"*Source IP:* `{escape_markdown(data.get('srcip','unknown'))}`\n"
