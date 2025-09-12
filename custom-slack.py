@@ -65,8 +65,8 @@ def main():
     alert_level = alert.get("rule", {}).get("level", "0")
     webhook_url = choose_webhook(alert_level, options)
     if not webhook_url:
-        print(f"[ERROR] No valid webhook for level {alert_level}.")
-        sys.exit(1)
+        print(f"[DEBUG] No valid webhook for level {alert_level}.")
+        sys.exit(0)
 
     # Build message
     data = alert.get("data", {})
