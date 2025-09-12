@@ -4,18 +4,29 @@ import json, os, re, sys
 from datetime import datetime
 import requests
 
+# Exit error codes
+ERR_BAD_ARGUMENTS = 2
+ERR_FILE_NOT_FOUND = 6
+ERR_INVALID_JSON = 7
+
 def escape_markdown(text):
     if not isinstance(text, str):
         text = str(text)
     return re.sub(r"([*`_~])", r"\\\1", text)
 
-def load_options():
-    opts_json = os.getenv("OSSEC_INTEGRATION_OPTIONS", "{}")
+def load_options(file_location: str):
+    """Read JSON options object from file"""
+    if not file_location:
+        return {}
     try:
-        return json.loads(opts_json)
-    except json.JSONDecodeError:
-        print(f"[ERROR] OSSEC_INTEGRATION_OPTIONS contains invalid JSON: {opts_json}")
-        sys.exit(1)
+        with open(file_location) as options_file:
+            return json.load(options_file)
+    except FileNotFoundError:
+        print(f"[ERROR] Options file '{file_location}' not found.")
+        sys.exit(ERR_FILE_NOT_FOUND)
+    except json.JSONDecodeError as e:
+        print(f"[ERROR] Failed parsing options JSON: {e}")
+        sys.exit(ERR_INVALID_JSON)
 
 def choose_webhook(level, options):
     try:
@@ -33,20 +44,29 @@ def choose_webhook(level, options):
 def main():
     if len(sys.argv) < 2:
         print("[ERROR] No alert file path provided.")
-        sys.exit(1)
+        sys.exit(ERR_BAD_ARGUMENTS)
+
     alert_file = sys.argv[1]
+    options_file = None
+
+    # Look for options file path in args
+    for idx in range(2, len(sys.argv)):
+        if sys.argv[idx].endswith("options"):
+            options_file = sys.argv[idx]
+            break
+
     try:
         alert = json.load(open(alert_file))
     except Exception as e:
         print(f"[ERROR] Failed to read or parse JSON: {e}")
-        sys.exit(1)
+        sys.exit(ERR_INVALID_JSON)
 
-    options = load_options()
+    options = load_options(options_file)
     alert_level = alert.get("rule", {}).get("level", "0")
     webhook_url = choose_webhook(alert_level, options)
     if not webhook_url:
         print(f"[ERROR] No valid webhook for level {alert_level}.")
-        sys.exit(0)
+        sys.exit(1)
 
     # Build message
     data = alert.get("data", {})
@@ -81,6 +101,7 @@ def main():
     resp = requests.post(webhook_url, json=payload)
     if resp.status_code != 200:
         print(f"[ERROR] Slack returned {resp.status_code}: {resp.text}")
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()
